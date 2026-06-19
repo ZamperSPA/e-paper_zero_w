@@ -74,20 +74,42 @@ pip install -r requirements.txt
 
 ### 6. Configurar Google Cloud (Gmail + Calendar)
 
-1. Entra a [Google Cloud Console](https://console.cloud.google.com/).
-2. Crea un proyecto (o usa uno existente).
-3. Habilita estas APIs:
-   - **Google Calendar API**
-   - **Gmail API**
-4. Ve a **APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth**.
-5. Tipo de aplicación: **Aplicación de escritorio**.
-6. Descarga el JSON y guárdalo como:
+#### A) Pantalla de consentimiento OAuth (obligatorio)
 
-   ```
-   credentials/credentials.json
-   ```
+1. [Google Cloud Console](https://console.cloud.google.com/) → **APIs y servicios** → **Pantalla de consentimiento de OAuth**.
+2. Tipo de usuario: **Externo** (para cuenta Gmail personal).
+3. Completa **nombre de la app** y **correo de asistencia** (campos obligatorios).
+4. En **Ámbitos / Scopes**, agrega:
+   - `.../auth/calendar.readonly`
+   - `.../auth/gmail.readonly`
+5. En **Usuarios de prueba**, agrega tu cuenta Gmail (`tu@gmail.com`).
+6. Estado: **Prueba** (Testing). No pases a Producción hasta verificar la app.
 
-7. En **Pantalla de consentimiento de OAuth**, agrega tu cuenta Gmail como usuario de prueba (si el proyecto está en modo de prueba).
+> Si falta la pantalla de consentimiento o tu correo no está como usuario de prueba, Google muestra **Error 400: invalid_request**.
+
+#### B) Habilitar APIs
+
+En **APIs y servicios → Biblioteca**, habilita:
+
+- **Google Calendar API**
+- **Gmail API**
+
+#### C) Credenciales OAuth
+
+1. **APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth**.
+2. Tipo: **Aplicación de escritorio** (no "Aplicación web").
+3. Descarga el JSON → `credentials/credentials.json`.
+
+**No edites `redirect_uris` manualmente.** En aplicación de escritorio Google usa loopback (`http://127.0.0.1:PUERTO`). El JSON puede mostrar `http://localhost`; eso es normal.
+
+#### D) Errores frecuentes
+
+| Error | Causa | Solución |
+|-------|-------|----------|
+| `400 invalid_request` | Consentimiento OAuth incompleto o sin usuario de prueba | Pasos A) arriba |
+| `400 invalid_request` + `urn:ietf:wg:oauth:2.0:oob` | Flujo OOB obsoleto | Usa credencial **Escritorio** y código actualizado |
+| `403 access_denied` | Tu Gmail no está en usuarios de prueba | Agrégalo en pantalla de consentimiento |
+| `redirect_uri_mismatch` | Credencial tipo Web mezclada con flujo Escritorio | Crea credencial nueva tipo **Escritorio** |
 
 ### 7. Crear configuración local
 
@@ -99,21 +121,23 @@ Edita `config.yaml` si necesitas cambiar rutas, calendario o intervalo de actual
 
 ## Primera ejecución (autenticación)
 
-La primera vez debes autorizar la cuenta Gmail:
-
 ```bash
 python3 main.py
 ```
 
-1. El programa mostrará una **URL** en la terminal.
-2. Ábrela en un navegador (teléfono o PC) e inicia sesión con tu cuenta Gmail.
-3. Tras aceptar permisos, el navegador redirige a `http://localhost/...` (la página puede no cargar).
-4. **Copia la URL completa** de la barra de direcciones y pégala en la terminal.
+1. La Pi mostrará una **URL** (con `127.0.0.1` y un puerto).
+2. Ábrela en un navegador (teléfono o PC) e inicia sesión con el **mismo Gmail** que agregaste como usuario de prueba.
+3. Acepta los permisos de Calendar y Gmail.
 
-El token queda guardado en `token.json` para ejecuciones futuras.
+**Si autorizas en otro dispositivo** (no en la Pi), tras el login el navegador irá a `http://127.0.0.1:PUERTO/...` y la página no cargará. Copia esa URL completa y en la terminal SSH de la Pi ejecuta:
 
-> **Importante:** `credentials/credentials.json` es el archivo OAuth de Google Cloud.
-> No confundir con `config.yaml` (configuración de la app).
+```bash
+curl "http://127.0.0.1:PUERTO/?state=...&code=..."
+```
+
+La app recibirá el código y guardará `token.json`.
+
+> **Importante:** `credentials/credentials.json` es OAuth de Google. No lo confundas con `config.yaml`.
 
 ## Uso básico
 
