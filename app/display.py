@@ -1,4 +1,4 @@
-"""Control del display e-paper Waveshare 2.7\" HAT (B) V2."""
+"""Control del display e-paper Waveshare 2.7\" HAT monocromo V2."""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ class EpaperDisplay:
 
         if not self.mock:
             try:
-                from waveshare_epd import epd2in7b_V2
+                from waveshare_epd import epd2in7_V2
 
-                self._epd = epd2in7b_V2.EPD()
+                self._epd = epd2in7_V2.EPD()
             except ImportError as exc:
                 raise ImportError(
                     "Instala los drivers de Waveshare:\n"
@@ -37,6 +37,7 @@ class EpaperDisplay:
                 ) from exc
 
         self.font_title = self._load_font(config.font_bold, 14)
+        self.font_bold = self._load_font(config.font_bold, 11)
         self.font_body = self._load_font(config.font_regular, 11)
         self.font_small = self._load_font(config.font_regular, 9)
         self.font_hint = self._load_font(config.font_regular, 8)
@@ -52,28 +53,19 @@ class EpaperDisplay:
         if self._epd is not None:
             self._epd.sleep()
 
-    def show(self, black_layer: Image.Image, red_layer: Image.Image) -> None:
+    def show(self, image: Image.Image) -> None:
         if self.mock:
-            preview = Image.new("RGB", (self.WIDTH, self.HEIGHT), "white")
-            preview.paste(self._layer_to_rgb(black_layer, (0, 0, 0)))
-            preview = Image.alpha_composite(
-                preview.convert("RGBA"),
-                self._layer_to_rgb(red_layer, (200, 0, 0)).convert("RGBA"),
-            )
+            preview = self._to_rgb(image)
             preview.save(self.config.mock_output)
             logger.info("Vista previa guardada en %s", self.config.mock_output)
             return
 
         assert self._epd is not None
-        self._epd.display(
-            self._epd.getbuffer(black_layer),
-            self._epd.getbuffer(red_layer),
-        )
+        self._epd.display(self._epd.getbuffer(image))
 
-    def blank_canvas(self) -> tuple[Image.Image, Image.Image, ImageDraw.ImageDraw, ImageDraw.ImageDraw]:
-        black = Image.new("1", (self.WIDTH, self.HEIGHT), WHITE)
-        red = Image.new("1", (self.WIDTH, self.HEIGHT), WHITE)
-        return black, red, ImageDraw.Draw(black), ImageDraw.Draw(red)
+    def blank_canvas(self) -> tuple[Image.Image, ImageDraw.ImageDraw]:
+        image = Image.new("1", (self.WIDTH, self.HEIGHT), WHITE)
+        return image, ImageDraw.Draw(image)
 
     @staticmethod
     def _load_font(path: Path, size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
@@ -83,35 +75,32 @@ class EpaperDisplay:
         return ImageFont.load_default()
 
     @staticmethod
-    def _layer_to_rgb(layer: Image.Image, color: tuple[int, int, int]) -> Image.Image:
-        rgb = Image.new("RGBA", layer.size, (255, 255, 255, 255))
+    def _to_rgb(layer: Image.Image) -> Image.Image:
+        rgb = Image.new("RGB", layer.size, "white")
         pixels = layer.load()
-        overlay = Image.new("RGBA", layer.size, (0, 0, 0, 0))
-        overlay_pixels = overlay.load()
+        out = rgb.load()
         for y in range(layer.height):
             for x in range(layer.width):
                 if pixels[x, y] == BLACK:
-                    overlay_pixels[x, y] = (*color, 255)
-        return Image.alpha_composite(rgb, overlay)
+                    out[x, y] = (0, 0, 0)
+        return rgb
 
-    def draw_header(
-        self,
-        draw_black: ImageDraw.ImageDraw,
-        draw_red: ImageDraw.ImageDraw,
-        title: str,
-        subtitle: str = "",
-    ) -> int:
-        draw_black.rectangle((0, 0, self.WIDTH, 28), fill=BLACK)
-        draw_red.rectangle((0, 0, self.WIDTH, 28), fill=WHITE)
-        draw_black.text((6, 6), title, font=self.font_title, fill=WHITE)
+    def draw_header(self, draw: ImageDraw.ImageDraw, title: str, subtitle: str = "") -> int:
+        draw.rectangle((0, 0, self.WIDTH, 28), fill=BLACK)
+        draw.text((6, 6), title, font=self.font_title, fill=WHITE)
         if subtitle:
-            draw_black.text((6, 18), subtitle, font=self.font_hint, fill=WHITE)
+            draw.text((6, 18), subtitle, font=self.font_hint, fill=WHITE)
         return 32
 
-    def draw_footer_hints(self, draw_black: ImageDraw.ImageDraw, hints: str) -> None:
+    def draw_section_title(self, draw: ImageDraw.ImageDraw, y: int, text: str) -> int:
+        draw.text((6, y), text, font=self.font_bold, fill=BLACK)
+        draw.line((6, y + 12, self.WIDTH - 6, y + 12), fill=BLACK, width=1)
+        return y + 16
+
+    def draw_footer_hints(self, draw: ImageDraw.ImageDraw, hints: str) -> None:
         y = self.HEIGHT - 14
-        draw_black.line((0, y - 2, self.WIDTH, y - 2), fill=BLACK, width=1)
-        draw_black.text((4, y), hints, font=self.font_hint, fill=BLACK)
+        draw.line((0, y - 2, self.WIDTH, y - 2), fill=BLACK, width=1)
+        draw.text((4, y), hints, font=self.font_hint, fill=BLACK)
 
     def wrap_text(
         self,

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Calendario e-paper para Waveshare 2.7\" HAT (B) + cuenta Gmail.
+Calendario e-paper para Waveshare 2.7\" HAT monocromo + cuenta Gmail.
 
 Requisitos en Raspberry Pi:
   1. Habilitar SPI: sudo raspi-config -> Interface Options -> SPI
