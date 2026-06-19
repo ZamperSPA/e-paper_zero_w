@@ -4,4 +4,5 @@ google-auth-httplib2>=0.4.0
 google-auth-oauthlib>=1.4.0
 Pillow>=12.2.0
 PyYAML>=6.0.3
+spidev>=3.8; platform_system == "Linux"
 gpiozero>=2.0.1; platform_system == "Linux"

@@ -30,8 +30,17 @@ class EpaperDisplay:
 
                 self._epd = epd2in7_V2.EPD()
             except ImportError as exc:
+                missing = getattr(exc, "name", "") or str(exc)
+                if "spidev" in missing:
+                    raise ImportError(
+                        "Falta el módulo spidev (comunicación SPI con el HAT).\n"
+                        "Con el entorno virtual activado:\n"
+                        "  pip install spidev\n"
+                        "O reinstala dependencias:\n"
+                        "  pip install -r requirements.txt"
+                    ) from exc
                 raise ImportError(
-                    "Instala los drivers de Waveshare:\n"
+                    "Instala los drivers de Waveshare en el mismo venv:\n"
                     "  git clone https://github.com/waveshare/e-Paper.git\n"
                     "  cd e-Paper/RaspberryPi_JetsonNano/python && pip install ."
                 ) from exc
