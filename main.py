@@ -21,6 +21,10 @@ import argparse
 import logging
 import sys
 
+from app.gpio_setup import configure_gpio
+
+configure_gpio()
+
 from app.app import EpaperCalendarApp
 from app.config import load_config
 

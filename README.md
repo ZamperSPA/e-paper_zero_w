@@ -45,7 +45,7 @@ cd e-paper_zero_w
 
 ```bash
 sudo apt update
-sudo apt install -y python3-pip python3-venv python3-pil python3-numpy python3-gpiozero git
+sudo apt install -y python3-pip python3-venv python3-pil python3-numpy python3-gpiozero python3-lgpio git
 ```
 
 ### 4. Instalar drivers de Waveshare
@@ -70,7 +70,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` incluye `spidev` (SPI) y `gpiozero` (botones), necesarios para el HAT en Raspberry Pi.
+`requirements.txt` incluye `spidev` (SPI), `lgpio` y `gpiozero` (GPIO del HAT y botones), necesarios en Raspberry Pi OS Bookworm o posterior.
 
 ### 6. Configurar Google Cloud (Gmail + Calendar)
 
@@ -198,6 +198,22 @@ source .venv/bin/activate
 pip install spidev
 # o
 pip install -r requirements.txt
+```
+
+**Avisos de `PinFactoryFallback` o error `/sys/class/gpio/gpio24/value`**
+
+En Raspberry Pi OS reciente el GPIO por sysfs está deshabilitado. Instala `lgpio` en el venv:
+
+```bash
+source .venv/bin/activate
+pip install lgpio
+pip install -r requirements.txt
+```
+
+Si persiste, agrega tu usuario al grupo `gpio`, cierra sesión y vuelve a entrar:
+
+```bash
+sudo usermod -aG gpio $USER
 ```
 
 **Error al importar `waveshare_epd`**
