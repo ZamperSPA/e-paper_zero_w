@@ -38,6 +38,7 @@ class EpaperDisplay:
         self.config = config
         self.mock = config.mock
         self._epd = None
+        self._frame_count = 0
 
         if not self.mock:
             try:
@@ -65,19 +66,23 @@ class EpaperDisplay:
         self.font_body = self._load_font(config.font_regular, 11, "regular")
         self.font_small = self._load_font(config.font_regular, 9, "regular")
         self.font_hint = self._load_font(config.font_regular, 8, "regular")
+        self.font_welcome = self._load_font(config.font_bold, 18, "bold")
 
     def init(self) -> None:
         if self._epd is None:
             return
+        logger.info("Inicializando e-paper...")
         if self._epd.init() != 0:
             raise RuntimeError("No se pudo inicializar el e-paper HAT")
         self._epd.Clear()
+        self._frame_count = 0
+        logger.info("e-paper listo")
 
     def sleep(self) -> None:
         if self._epd is not None:
             self._epd.sleep()
 
-    def show(self, image: Image.Image) -> None:
+    def show(self, image: Image.Image, *, full_refresh: bool = False) -> None:
         if self.mock:
             preview = self._to_rgb(image)
             preview.save(self.config.mock_output)
@@ -85,7 +90,27 @@ class EpaperDisplay:
             return
 
         assert self._epd is not None
-        self._epd.display(self._epd.getbuffer(image))
+        if image.size != (self.WIDTH, self.HEIGHT):
+            image = image.resize((self.WIDTH, self.HEIGHT))
+
+        buffer = self._epd.getbuffer(image)
+        use_full = full_refresh or self._frame_count == 0
+
+        logger.info(
+            "Actualizando pantalla (%s, puede tardar ~15 s)...",
+            "refresco completo" if use_full else "refresco rápido",
+        )
+
+        if use_full:
+            if self._epd.init() != 0:
+                raise RuntimeError("No se pudo reinicializar el e-paper")
+            self._epd.display(buffer)
+        else:
+            self._epd.init_Fast()
+            self._epd.display_Fast(buffer)
+
+        self._frame_count += 1
+        logger.info("Pantalla actualizada")
 
     def blank_canvas(self) -> tuple[Image.Image, ImageDraw.ImageDraw]:
         image = Image.new("1", (self.WIDTH, self.HEIGHT), WHITE)
@@ -182,3 +207,15 @@ class EpaperDisplay:
         for index, line in enumerate(visible):
             draw.text((x, y + index * line_height), line, font=font, fill=fill)
         return y + len(visible) * line_height
+
+    def draw_centered_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        y: int,
+        text: str,
+        font: ImageFont.ImageFont,
+        fill: int = BLACK,
+    ) -> None:
+        width = font.getlength(text)
+        x = max(0, int((self.WIDTH - width) / 2))
+        draw.text((x, y), text, font=font, fill=fill)

@@ -18,6 +18,17 @@ class ScreenRenderer:
     def __init__(self, display: EpaperDisplay) -> None:
         self.display = display
 
+    def render_welcome(self) -> None:
+        image, draw = self.display.blank_canvas()
+        draw.rectangle((0, 0, self.display.WIDTH, self.display.HEIGHT), fill=BLACK)
+        self.display.draw_centered_text(draw, 95, "e-Paper", self.display.font_welcome, fill=WHITE)
+        self.display.draw_centered_text(draw, 125, "Calendario", self.display.font_bold, fill=WHITE)
+        self.display.draw_centered_text(draw, 155, "Gmail", self.display.font_body, fill=WHITE)
+        self.display.draw_centered_text(draw, 200, "Iniciando...", self.display.font_hint, fill=WHITE)
+        draw.rectangle((20, 220, self.display.WIDTH - 20, 228), outline=WHITE)
+        draw.rectangle((20, 220, 60, 228), fill=WHITE)
+        self.display.show(image, full_refresh=True)
+
     def render(self, state: AppState) -> None:
         if state.screen == Screen.CALENDAR_DAY:
             image = self._render_day_view(state)

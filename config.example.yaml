@@ -18,6 +18,8 @@ display:
   # Rutas de fuentes en Raspberry Pi OS
   font_regular: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
   font_bold: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+  # Segundos de pantalla de bienvenida al iniciar
+  welcome_seconds: 2
 
 buttons:
   # Pines GPIO del HAT 2.7" (de arriba hacia abajo: KEY1..KEY4)

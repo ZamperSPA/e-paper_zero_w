@@ -39,6 +39,13 @@ class EpaperCalendarApp:
     def run(self) -> None:
         self._running = True
         self.display.init()
+
+        logger.info("Mostrando pantalla de bienvenida...")
+        self.renderer.render_welcome()
+        welcome_seconds = self.config.display.welcome_seconds
+        if welcome_seconds > 0:
+            time.sleep(welcome_seconds)
+
         self.refresh_data()
         self._render_if_needed(force=True)
 
@@ -73,6 +80,8 @@ class EpaperCalendarApp:
             elif key == "key4":
                 self._on_key4()
             self._dirty = True
+            screen_name = self.state.screen.name
+        logger.info("Botón %s → pantalla %s", key, screen_name)
 
     def refresh_data(self) -> None:
         logger.info("Sincronizando con Google...")

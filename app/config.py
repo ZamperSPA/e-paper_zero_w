@@ -26,6 +26,7 @@ class DisplayConfig:
     mock_output: Path
     font_regular: Path
     font_bold: Path
+    welcome_seconds: float
 
 
 @dataclass
@@ -93,6 +94,7 @@ def load_config(path: Path | None = None) -> AppConfig:
                 "font_bold",
                 "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
             )),
+            welcome_seconds=float(display.get("welcome_seconds", 2)),
         ),
         buttons=ButtonsConfig(
             key1=int(buttons.get("key1", 5)),
