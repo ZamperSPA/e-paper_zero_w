@@ -1,0 +1,31 @@
+# Copia este archivo a config.yaml y ajusta los valores.
+
+google:
+  # Ruta al JSON de credenciales OAuth (Google Cloud Console > APIs > Credenciales)
+  credentials_file: credentials/credentials.json
+  token_file: token.json
+  # ID del calendario: "primary" usa el calendario principal de la cuenta Gmail
+  calendar_id: primary
+  # Cuántos días hacia adelante cargar eventos
+  days_ahead: 14
+  # Máximo de correos no leídos a mostrar
+  max_unread_emails: 5
+
+display:
+  # true = simula pantalla en archivo PNG (útil para probar en PC)
+  mock: false
+  mock_output: preview.png
+  # Rutas de fuentes en Raspberry Pi OS
+  font_regular: /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
+  font_bold: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+
+buttons:
+  # Pines GPIO del HAT 2.7" (de arriba hacia abajo: KEY1..KEY4)
+  key1: 5
+  key2: 6
+  key3: 13
+  key4: 19
+
+refresh:
+  # Actualización automática de datos (segundos). 0 = desactivado
+  auto_interval_seconds: 900
