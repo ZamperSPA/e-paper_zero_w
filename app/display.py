@@ -14,6 +14,21 @@ logger = logging.getLogger(__name__)
 WHITE = 255
 BLACK = 0
 
+LINUX_FONT_CANDIDATES: dict[str, list[Path]] = {
+    "regular": [
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/usr/share/fonts/truetype/freefont/FreeSans.ttf"),
+        Path("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"),
+        Path("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf"),
+    ],
+    "bold": [
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        Path("/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"),
+        Path("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"),
+        Path("/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf"),
+    ],
+}
+
 
 class EpaperDisplay:
     WIDTH = 176
@@ -45,11 +60,11 @@ class EpaperDisplay:
                     "  cd e-Paper/RaspberryPi_JetsonNano/python && pip install ."
                 ) from exc
 
-        self.font_title = self._load_font(config.font_bold, 14)
-        self.font_bold = self._load_font(config.font_bold, 11)
-        self.font_body = self._load_font(config.font_regular, 11)
-        self.font_small = self._load_font(config.font_regular, 9)
-        self.font_hint = self._load_font(config.font_regular, 8)
+        self.font_title = self._load_font(config.font_bold, 14, "bold")
+        self.font_bold = self._load_font(config.font_bold, 11, "bold")
+        self.font_body = self._load_font(config.font_regular, 11, "regular")
+        self.font_small = self._load_font(config.font_regular, 9, "regular")
+        self.font_hint = self._load_font(config.font_regular, 8, "regular")
 
     def init(self) -> None:
         if self._epd is None:
@@ -76,11 +91,30 @@ class EpaperDisplay:
         image = Image.new("1", (self.WIDTH, self.HEIGHT), WHITE)
         return image, ImageDraw.Draw(image)
 
-    @staticmethod
-    def _load_font(path: Path, size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    @classmethod
+    def _resolve_font_path(cls, path: Path, kind: str) -> Path | None:
         if path.exists():
-            return ImageFont.truetype(str(path), size)
-        logger.warning("Fuente no encontrada (%s), usando fuente por defecto", path)
+            return path
+        for candidate in LINUX_FONT_CANDIDATES.get(kind, []):
+            if candidate.exists():
+                logger.info("Usando fuente alternativa: %s", candidate)
+                return candidate
+        return None
+
+    @classmethod
+    def _load_font(
+        cls,
+        path: Path,
+        size: int,
+        kind: str = "regular",
+    ) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+        resolved = cls._resolve_font_path(path, kind)
+        if resolved is not None:
+            return ImageFont.truetype(str(resolved), size)
+        logger.warning(
+            "Fuente no encontrada (%s). Instala: sudo apt install fonts-dejavu-core",
+            path,
+        )
         return ImageFont.load_default()
 
     @staticmethod

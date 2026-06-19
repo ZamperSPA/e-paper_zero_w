@@ -45,7 +45,7 @@ cd e-paper_zero_w
 
 ```bash
 sudo apt update
-sudo apt install -y python3-pip python3-venv python3-pil python3-numpy python3-gpiozero python3-lgpio git
+sudo apt install -y python3-pip python3-venv python3-pil python3-numpy python3-gpiozero python3-lgpio fonts-dejavu-core git
 ```
 
 ### 4. Instalar drivers de Waveshare
@@ -99,17 +99,21 @@ Edita `config.yaml` si necesitas cambiar rutas, calendario o intervalo de actual
 
 ## Primera ejecución (autenticación)
 
-La primera vez debes autorizar la cuenta Gmail. El programa mostrará una URL en la consola:
+La primera vez debes autorizar la cuenta Gmail:
 
 ```bash
 python3 main.py
 ```
 
-1. Abre la URL en un navegador (puede ser en otro dispositivo).
-2. Inicia sesión con tu cuenta Gmail y acepta los permisos.
-3. Copia el código de autorización y pégalo en la terminal.
+1. El programa mostrará una **URL** en la terminal.
+2. Ábrela en un navegador (teléfono o PC) e inicia sesión con tu cuenta Gmail.
+3. Tras aceptar permisos, el navegador redirige a `http://localhost/...` (la página puede no cargar).
+4. **Copia la URL completa** de la barra de direcciones y pégala en la terminal.
 
 El token queda guardado en `token.json` para ejecuciones futuras.
+
+> **Importante:** `credentials/credentials.json` es el archivo OAuth de Google Cloud.
+> No confundir con `config.yaml` (configuración de la app).
 
 ## Uso básico
 
@@ -230,8 +234,10 @@ sudo usermod -aG gpio $USER
 - Verifica que Calendar API y Gmail API estén habilitadas.
 
 **Fuentes no encontradas**
-- En Raspberry Pi OS las fuentes DejaVu suelen estar en `/usr/share/fonts/truetype/dejavu/`.
-- Ajusta las rutas en `config.yaml` si usas otra distribución.
+```bash
+sudo apt install fonts-dejavu-core
+```
+La app también busca automáticamente FreeSans, Liberation y Noto si DejaVu no está instalada.
 
 ## Licencia
 

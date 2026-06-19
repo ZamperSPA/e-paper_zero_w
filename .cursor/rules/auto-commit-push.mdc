@@ -1,0 +1,36 @@
+---
+description: Commit y push automáticos tras cada cambio en el código
+alwaysApply: true
+---
+
+# Commit y push automáticos
+
+Después de **cada cambio de código** en este repositorio, haz commit y push sin esperar que el usuario lo pida.
+
+## Cuándo aplicar
+
+- Al terminar una tarea de implementación, corrección o refactor con archivos modificados.
+- No hagas commit vacío si no hay cambios.
+- No hagas commit si solo respondiste una pregunta sin editar archivos.
+
+## Protocolo
+
+1. En paralelo: `git status`, `git diff`, `git log -3 --oneline`.
+2. **No incluir nunca** en el commit:
+   - `credentials/`, `credentials.json`, `token.json`, `config.yaml`, `.env`
+   - Cualquier archivo con secretos o claves OAuth
+3. Redacta un mensaje de commit en español (1–2 oraciones, enfoque en el porqué).
+4. `git add` solo archivos relevantes → `git commit` → `git status`.
+5. `git push origin main` (o la rama actual con upstream).
+
+## Restricciones de seguridad
+
+- NUNCA actualizar `git config`.
+- NUNCA `push --force` a `main`/`master`.
+- NUNCA `--no-verify` ni saltar hooks.
+- Si el commit falla por hook, corrige y crea un **nuevo** commit (no `--amend` salvo las excepciones habituales).
+
+## Si el push falla
+
+- Informa el error al usuario.
+- No reintentes con force push.

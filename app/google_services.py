@@ -50,9 +50,28 @@ class GoogleServices:
             )
 
         flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
-        creds = flow.run_console()
+        creds = self._authenticate(flow)
         token_path.write_text(creds.to_json(), encoding="utf-8")
         return creds
+
+    def _authenticate(self, flow: InstalledAppFlow) -> Credentials:
+        """OAuth interactivo para Pi sin navegador (run_console fue eliminado por Google)."""
+        auth_url, _ = flow.authorization_url(
+            access_type="offline",
+            include_granted_scopes="true",
+            prompt="consent",
+        )
+        print("\n=== Autorización Google (solo la primera vez) ===")
+        print("1. Abre esta URL en un teléfono o PC:\n")
+        print(auth_url)
+        print(
+            "\n2. Tras autorizar, el navegador redirige a localhost.\n"
+            "   La página puede no cargar: copia la URL COMPLETA de la barra.\n"
+            "   Debe verse así: http://localhost/?state=...&code=...\n"
+        )
+        redirect_response = input("Pega la URL aquí: ").strip()
+        flow.fetch_token(authorization_response=redirect_response)
+        return flow.credentials
 
     def fetch_data(self) -> AppData:
         data = AppData(last_sync=datetime.now().astimezone())
