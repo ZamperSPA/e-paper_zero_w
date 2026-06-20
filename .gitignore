@@ -7,3 +7,5 @@ config.yaml
 credentials/
 token.json
 *.log
+*.png
+e-Paper/
