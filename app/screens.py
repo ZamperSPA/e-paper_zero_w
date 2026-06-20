@@ -68,7 +68,7 @@ class ScreenRenderer:
             y = self._draw_error(draw, y, state.data.sync_error)
         else:
             current_day: date | None = None
-            for event in state.data.upcoming_events(limit=10):
+            for event in state.upcoming_events(limit=10):
                 event_day = event.start.date()
                 if event_day != current_day:
                     current_day = event_day
@@ -103,7 +103,7 @@ class ScreenRenderer:
             y = self._draw_error(draw, y, state.data.sync_error)
         else:
             y = self.display.draw_section_title(draw, y, "Próximos eventos")
-            for event in state.data.upcoming_events(limit=3):
+            for event in state.upcoming_events(limit=3):
                 label = f"{self._format_event_time(event)} {event.summary}"
                 wrapped = self.display.wrap_text(label, self.display.font_small, 160)
                 y = self.display.draw_text_block(
