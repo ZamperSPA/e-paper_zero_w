@@ -16,6 +16,13 @@ from app.screens import ScreenRenderer
 
 logger = logging.getLogger(__name__)
 
+BUTTON_LABELS = {
+    "key1": "K1",
+    "key2": "K2",
+    "key3": "K3 Sync",
+    "key4": "K4",
+}
+
 
 class EpaperCalendarApp:
     SCREENS_ORDER = (
@@ -26,7 +33,7 @@ class EpaperCalendarApp:
 
     def __init__(self, config: AppConfig) -> None:
         self.config = config
-        self.state = AppState()
+        self.state = AppState(hidden_events=config.google.hidden_events)
         self._lock = threading.Lock()
         self._dirty = True
         self._running = False
@@ -70,7 +77,6 @@ class EpaperCalendarApp:
     def handle_button(self, key: str) -> None:
         if key == "key3":
             self.refresh_data()
-            return
 
         with self._lock:
             if key == "key1":
@@ -79,15 +85,20 @@ class EpaperCalendarApp:
                 self._on_key2()
             elif key == "key4":
                 self._on_key4()
+
+            self.state.button_feedback = BUTTON_LABELS.get(key, key)
             self._dirty = True
             screen_name = self.state.screen.name
-        logger.info("Botón %s → pantalla %s", key, screen_name)
+            feedback = self.state.button_feedback
+
+        logger.info("Botón %s → pantalla %s (%s)", key, screen_name, feedback)
 
     def refresh_data(self) -> None:
         logger.info("Sincronizando con Google...")
         data = self.google.fetch_data()
         with self._lock:
             self.state.data = data
+            self.state.button_feedback = BUTTON_LABELS["key3"]
             self._dirty = True
         logger.info("Sincronización completada")
 
@@ -129,6 +140,9 @@ class EpaperCalendarApp:
                 screen=self.state.screen,
                 selected_day=self.state.selected_day,
                 data=self.state.data,
+                hidden_events=self.state.hidden_events,
+                button_feedback=self.state.button_feedback,
             )
+            self.state.button_feedback = ""
 
         self.renderer.render(state_snapshot)

@@ -8,8 +8,9 @@ from typing import Any
 
 import yaml
 
-ROOT_DIR = Path(__file__).resolve().parent.parent
+from app.event_filter import DEFAULT_HIDDEN_EVENTS
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
 @dataclass
 class GoogleConfig:
@@ -18,6 +19,7 @@ class GoogleConfig:
     calendar_id: str
     days_ahead: int
     max_unread_emails: int
+    hidden_events: tuple[str, ...]
 
 
 @dataclass
@@ -82,6 +84,7 @@ def load_config(path: Path | None = None) -> AppConfig:
             calendar_id=google.get("calendar_id", "primary"),
             days_ahead=int(google.get("days_ahead", 14)),
             max_unread_emails=int(google.get("max_unread_emails", 5)),
+            hidden_events=tuple(google.get("hidden_events", DEFAULT_HIDDEN_EVENTS)),
         ),
         display=DisplayConfig(
             mock=bool(display.get("mock", False)),

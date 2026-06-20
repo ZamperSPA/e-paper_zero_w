@@ -39,6 +39,10 @@ class ScreenRenderer:
 
         self.display.show(image)
 
+    def _footer(self, draw, hints: str, state: AppState) -> None:
+        feedback = f"● {state.button_feedback}" if state.button_feedback else ""
+        self.display.draw_footer_hints(draw, hints, feedback=feedback)
+
     def _render_day_view(self, state: AppState):
         image, draw = self.display.blank_canvas()
         day = state.selected_day
@@ -57,7 +61,7 @@ class ScreenRenderer:
             else:
                 y = self._draw_events(draw, y, events)
 
-        self.display.draw_footer_hints(draw, "K1:día- K2:día+ K3:sync K4:agenda")
+        self._footer(draw, "K1:día- K2:día+ K3:sync K4:agenda", state)
         return image
 
     def _render_agenda_view(self, state: AppState):
@@ -67,27 +71,28 @@ class ScreenRenderer:
         if state.data.sync_error:
             y = self._draw_error(draw, y, state.data.sync_error)
         else:
-            current_day: date | None = None
-            for event in state.upcoming_events(limit=10):
-                event_day = event.start.date()
-                if event_day != current_day:
-                    current_day = event_day
-                    y = self.display.draw_section_title(draw, y, self._format_day_title(event_day))
+            upcoming = state.upcoming_events(limit=10)
+            if not upcoming:
+                draw.text((8, y + 8), "Sin eventos", font=self.display.font_body, fill=0)
+            else:
+                current_day: date | None = None
+                for event in upcoming:
+                    event_day = event.start.date()
+                    if event_day != current_day:
+                        current_day = event_day
+                        y = self.display.draw_section_title(draw, y, self._format_day_title(event_day))
 
-                time_label = self._format_event_time(event)
-                line = f"{time_label} {event.summary}"
-                wrapped = self.display.wrap_text(line, self.display.font_small, 160)
-                y = self.display.draw_text_block(
-                    draw, 8, y, wrapped[:2], self.display.font_small, max_lines=2
-                )
-                y += 2
-                if y > self.display.HEIGHT - 24:
-                    break
+                    time_label = self._format_event_time(event)
+                    line = f"{time_label} {event.summary}"
+                    wrapped = self.display.wrap_text(line, self.display.font_small, 160)
+                    y = self.display.draw_text_block(
+                        draw, 8, y, wrapped[:2], self.display.font_small, max_lines=2
+                    )
+                    y += 2
+                    if y > self.display.HEIGHT - 36:
+                        break
 
-            if not state.data.events:
-                draw.text((8, y + 8), "Sin eventos próximos", font=self.display.font_body, fill=0)
-
-        self.display.draw_footer_hints(draw, "K1:día K2:día+ K3:sync K4:notif")
+        self._footer(draw, "K1:día K2:día+ K3:sync K4:notif", state)
         return image
 
     def _render_notifications_view(self, state: AppState):
@@ -102,36 +107,46 @@ class ScreenRenderer:
         if state.data.sync_error:
             y = self._draw_error(draw, y, state.data.sync_error)
         else:
-            y = self.display.draw_section_title(draw, y, "Próximos eventos")
-            for event in state.upcoming_events(limit=3):
-                label = f"{self._format_event_time(event)} {event.summary}"
-                wrapped = self.display.wrap_text(label, self.display.font_small, 160)
-                y = self.display.draw_text_block(
-                    draw, 8, y, wrapped[:1], self.display.font_small, max_lines=1
-                )
-                y += 2
+            upcoming = state.upcoming_events(limit=3)
+            has_emails = bool(state.data.unread_emails)
 
-            y += 4
-            y = self.display.draw_section_title(draw, y, "Gmail sin leer")
-
-            if not state.data.unread_emails:
-                draw.text((8, y), "Bandeja al día", font=self.display.font_small, fill=0)
+            if not upcoming and not has_emails:
+                draw.text((8, y + 8), "Sin notificaciones", font=self.display.font_body, fill=0)
             else:
-                for email in state.data.unread_emails:
-                    sender_lines = self.display.wrap_text(
-                        email.sender, self.display.font_small, 160
-                    )
-                    subject_lines = self.display.wrap_text(
-                        email.subject, self.display.font_small, 160
-                    )
-                    draw.text((8, y), sender_lines[0], font=self.display.font_bold, fill=0)
-                    y += 11
-                    draw.text((8, y), subject_lines[0], font=self.display.font_hint, fill=0)
-                    y += 13
-                    if y > self.display.HEIGHT - 28:
-                        break
+                y = self.display.draw_section_title(draw, y, "Próximos eventos")
+                if not upcoming:
+                    draw.text((8, y), "Sin eventos", font=self.display.font_small, fill=0)
+                    y += 14
+                else:
+                    for event in upcoming:
+                        label = f"{self._format_event_time(event)} {event.summary}"
+                        wrapped = self.display.wrap_text(label, self.display.font_small, 160)
+                        y = self.display.draw_text_block(
+                            draw, 8, y, wrapped[:1], self.display.font_small, max_lines=1
+                        )
+                        y += 2
 
-        self.display.draw_footer_hints(draw, "K1:calend K2:día+ K3:sync K4:agenda")
+                y += 4
+                y = self.display.draw_section_title(draw, y, "Gmail sin leer")
+
+                if not has_emails:
+                    draw.text((8, y), "Bandeja al día", font=self.display.font_small, fill=0)
+                else:
+                    for email in state.data.unread_emails:
+                        sender_lines = self.display.wrap_text(
+                            email.sender, self.display.font_small, 160
+                        )
+                        subject_lines = self.display.wrap_text(
+                            email.subject, self.display.font_small, 160
+                        )
+                        draw.text((8, y), sender_lines[0], font=self.display.font_bold, fill=0)
+                        y += 11
+                        draw.text((8, y), subject_lines[0], font=self.display.font_hint, fill=0)
+                        y += 13
+                        if y > self.display.HEIGHT - 36:
+                            break
+
+        self._footer(draw, "K1:calend K2:día+ K3:sync K4:agenda", state)
         return image
 
     def _draw_events(self, draw, y, events):

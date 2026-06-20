@@ -162,7 +162,19 @@ class EpaperDisplay:
         draw.line((6, y + 12, self.WIDTH - 6, y + 12), fill=BLACK, width=1)
         return y + 16
 
-    def draw_footer_hints(self, draw: ImageDraw.ImageDraw, hints: str) -> None:
+    def draw_footer_hints(
+        self,
+        draw: ImageDraw.ImageDraw,
+        hints: str,
+        feedback: str = "",
+    ) -> None:
+        if feedback:
+            y = self.HEIGHT - 28
+            draw.rectangle((0, y, self.WIDTH, self.HEIGHT), fill=BLACK)
+            draw.text((4, y + 4), hints, font=self.font_hint, fill=WHITE)
+            draw.text((4, y + 14), feedback, font=self.font_hint, fill=WHITE)
+            return
+
         y = self.HEIGHT - 14
         draw.line((0, y - 2, self.WIDTH, y - 2), fill=BLACK, width=1)
         draw.text((4, y), hints, font=self.font_hint, fill=BLACK)

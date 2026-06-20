@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum, auto
 
+from app.event_filter import DEFAULT_HIDDEN_EVENTS, filter_events
+
 
 class Screen(Enum):
     CALENDAR_DAY = auto()
@@ -43,15 +45,19 @@ class AppState:
     screen: Screen = Screen.CALENDAR_DAY
     selected_day: date = field(default_factory=date.today)
     data: AppData = field(default_factory=AppData)
+    hidden_events: tuple[str, ...] = DEFAULT_HIDDEN_EVENTS
+    button_feedback: str = ""
 
     def events_for_day(self, day: date) -> list[CalendarEvent]:
-        return [
+        events = [
             event
             for event in self.data.events
             if event.start.date() == day
         ]
+        return filter_events(events, self.hidden_events)
 
     def upcoming_events(self, limit: int = 8) -> list[CalendarEvent]:
         now = datetime.now().astimezone()
         upcoming = [event for event in self.data.events if event.end >= now]
-        return sorted(upcoming, key=lambda item: item.start)[:limit]
+        visible = filter_events(upcoming, self.hidden_events)
+        return sorted(visible, key=lambda item: item.start)[:limit]
