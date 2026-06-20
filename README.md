@@ -15,7 +15,7 @@ Aplicación para **Raspberry Pi** con el [Waveshare 2.7" e-Paper HAT monocromo](
 ### Hardware
 
 - Raspberry Pi con header de 40 pines (Zero W, 3, 4, 5, etc.)
-- Waveshare **2.7" e-Paper HAT monocromo** (176×264 px, blanco/negro)
+- Waveshare **2.7" e-Paper HAT monocromo V1** (176×264 px, blanco/negro)
 - Conexión a internet (Wi‑Fi o Ethernet)
 
 ### Software
@@ -250,6 +250,7 @@ sudo usermod -aG gpio $USER
 
 **Pantalla en blanco o sin actualizar**
 - Revisa que el HAT esté bien conectado al header de 40 pines.
+- Confirma el driver: este proyecto usa **`epd2in7` (V1)**. Si tu panel es V2, prueba `epd_2in7_V2_test.py` vs `epd_2in7_test.py` en los ejemplos de Waveshare.
 - Ejecuta con `--debug` para ver errores en consola.
 
 **Error de autenticación Google**

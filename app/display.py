@@ -1,4 +1,4 @@
-"""Control del display e-paper Waveshare 2.7\" HAT monocromo V2."""
+"""Control del display e-paper Waveshare 2.7\" HAT monocromo V1."""
 
 from __future__ import annotations
 
@@ -42,9 +42,9 @@ class EpaperDisplay:
 
         if not self.mock:
             try:
-                from waveshare_epd import epd2in7_V2
+                from waveshare_epd import epd2in7
 
-                self._epd = epd2in7_V2.EPD()
+                self._epd = epd2in7.EPD()
             except ImportError as exc:
                 missing = getattr(exc, "name", "") or str(exc)
                 if "spidev" in missing:
@@ -74,9 +74,9 @@ class EpaperDisplay:
         logger.info("Inicializando e-paper...")
         if self._epd.init() != 0:
             raise RuntimeError("No se pudo inicializar el e-paper HAT")
-        self._epd.Clear()
+        self._epd.Clear(0xFF)
         self._frame_count = 0
-        logger.info("e-paper listo")
+        logger.info("e-paper listo (driver V1)")
 
     def sleep(self) -> None:
         if self._epd is not None:
@@ -97,17 +97,14 @@ class EpaperDisplay:
         use_full = full_refresh or self._frame_count == 0
 
         logger.info(
-            "Actualizando pantalla (%s, puede tardar ~15 s)...",
-            "refresco completo" if use_full else "refresco rápido",
+            "Actualizando pantalla V1 (%s, puede tardar ~15 s)...",
+            "refresco completo" if use_full else "actualización",
         )
 
-        if use_full:
-            if self._epd.init() != 0:
-                raise RuntimeError("No se pudo reinicializar el e-paper")
-            self._epd.display(buffer)
-        else:
-            self._epd.init_Fast()
-            self._epd.display_Fast(buffer)
+        if use_full and self._epd.init() != 0:
+            raise RuntimeError("No se pudo reinicializar el e-paper")
+
+        self._epd.display(buffer)
 
         self._frame_count += 1
         logger.info("Pantalla actualizada")
