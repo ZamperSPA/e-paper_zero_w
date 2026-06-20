@@ -1,0 +1,79 @@
+---
+description: Probar en la Pi por SSH, revisar logs y luego commit
+alwaysApply: true
+---
+
+# Verificar en Pi antes de commit
+
+El proyecto en la Raspberry Pi está en **`~/e-paper_zero_w`**.  
+Antes de **cualquier commit**, ejecuta el programa en la Pi, revisa los logs y solo commitea si la prueba es aceptable.
+
+## Cuándo aplicar
+
+- Tras cambiar código en `app/`, `main.py`, `config.example.yaml` o dependencias.
+- Complementa la regla `auto-commit-push`: el commit va **después** de esta verificación, no antes.
+
+## Paso 1 — Sincronizar código en la Pi
+
+Usa el MCP **`user-ssh-mcp`** (herramienta `exec`).
+
+Si **ya hiciste push** de la rama:
+```bash
+cd ~/e-paper_zero_w && git pull --ff-only
+```
+
+Si **aún no hay push** (cambios solo locales), copia los archivos modificados desde el entorno local a la Pi (shell local):
+```bash
+scp -r app/ pi@pi-zero:~/e-paper_zero_w/
+scp main.py requirements.txt config.example.yaml pi@pi-zero:~/e-paper_zero_w/
+```
+(Ajusta la lista según los archivos cambiados.)
+
+## Paso 2 — Ejecutar y capturar logs
+
+En la Pi vía SSH MCP `exec`:
+```bash
+cd ~/e-paper_zero_w && source .venv/bin/activate && timeout 60 python3 main.py 2>&1 | tee /tmp/epaper_test.log; echo "EXIT:$?"
+```
+
+- `timeout 60` detiene la app tras ~1 min (suficiente para init, bienvenida y primer render).
+- Si hace falta más tiempo (e-paper lento), sube a `90`.
+
+Alternativa rápida sin hardware (solo validar imports):
+```bash
+cd ~/e-paper_zero_w && source .venv/bin/activate && python3 -c "from app.app import EpaperCalendarApp; print('OK imports')"
+```
+
+## Paso 3 — Revisar logs
+
+Lee el log en la Pi:
+```bash
+tail -n 80 /tmp/epaper_test.log
+```
+
+**Prueba fallida** si aparece:
+- `Traceback`, `Error`, `Exception`, `ImportError`, `ModuleNotFoundError`
+- `No se pudo inicializar el e-paper` (salvo que el usuario indique que prueba sin HAT)
+- Exit code distinto de `0` o `124` (`124` = timeout esperado)
+
+**Prueba aceptable** si:
+- Hay `e-paper listo`, `Pantalla actualizada` o `Sincronización completada`
+- O al menos arranca sin traceback (timeout 124 es normal)
+
+Si falla: **corrige el código, no commitees**, y repite desde el Paso 1.
+
+## Paso 4 — Commit y push
+
+Solo si la prueba pasó, sigue la regla `auto-commit-push`:
+1. `git status`, `git diff`, `git log -3 --oneline`
+2. Commit en español (sin secretos)
+3. `git push origin main`
+4. En la Pi: `cd ~/e-paper_zero_w && git pull --ff-only`
+
+## Resumen del flujo
+
+```
+Cambios locales → Sync a Pi → python3 main.py (logs) → ¿OK? → commit + push → git pull en Pi
+                                      ↓ no
+                                   Corregir y repetir
+```

@@ -5,7 +5,14 @@ alwaysApply: true
 
 # Commit y push automáticos
 
-Después de **cada cambio de código** en este repositorio, haz commit y push sin esperar que el usuario lo pida.
+Después de **cada cambio de código** con prueba exitosa en la Pi, haz commit y push sin esperar que el usuario lo pida.
+
+## Orden obligatorio
+
+1. **Primero** aplica la regla `pi-test-before-commit` (ejecutar en `~/e-paper_zero_w`, revisar logs).
+2. **Después** commit y push (esta regla).
+
+No commitees si la prueba en la Pi falló o no se ejecutó.
 
 ## Cuándo aplicar
 
@@ -22,6 +29,7 @@ Después de **cada cambio de código** en este repositorio, haz commit y push si
 3. Redacta un mensaje de commit en español (1–2 oraciones, enfoque en el porqué).
 4. `git add` solo archivos relevantes → `git commit` → `git status`.
 5. `git push origin main` (o la rama actual con upstream).
+6. En la Pi (SSH MCP): `cd ~/e-paper_zero_w && git pull --ff-only`
 
 ## Restricciones de seguridad
 
