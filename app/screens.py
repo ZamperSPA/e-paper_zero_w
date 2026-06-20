@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from app.display import EpaperDisplay
+from app.display import BLACK, WHITE, EpaperDisplay
 from app.models import AppState, Screen
 
 
